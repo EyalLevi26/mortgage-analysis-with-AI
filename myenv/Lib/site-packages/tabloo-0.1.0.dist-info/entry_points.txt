@@ -1,0 +1,3 @@
+[console_scripts]
+tabloo_cli = tabloo.tabloo_cli:main
+
