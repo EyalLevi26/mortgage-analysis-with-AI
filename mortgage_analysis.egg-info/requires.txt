@@ -1,0 +1,11 @@
+pmdarima
+plotly
+pathlib
+pandas
+numpy
+matplotlib
+scipy
+statsmodels
+tqdm
+tabloo
+os

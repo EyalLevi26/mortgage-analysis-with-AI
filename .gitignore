@@ -6,6 +6,7 @@ build/
 
 # Ignore virtual environment
 myenv/
+myenv_new/
 
 __pycache__/
 **/__pycache__/

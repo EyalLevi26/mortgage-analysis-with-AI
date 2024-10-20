@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: mortgage_analysis
+Version: 0.1.0
+Summary: AI-powered mortgage data analysis using time series forecasting         (ARIMA/SARIMAX), stationarity tests, and model optimization.        Includes data preprocessing and visualization for predictive insights.
+Author: Eyal Levi
+Author-email: eyal260290@gmail.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Requires-Dist: pmdarima
+Requires-Dist: plotly
+Requires-Dist: pathlib
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: statsmodels
+Requires-Dist: tqdm
+Requires-Dist: tabloo
+Requires-Dist: os

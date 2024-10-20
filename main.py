@@ -8,13 +8,15 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
 from utills import create_table_for_bank_and_risk
+from typing import Union
+
 # import pickle
 # import os
 # import tabloo
 # import itertools
 
 
-def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15) ->  pd.DataFrame | None:
+def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15) ->  Union[pd.DataFrame, None]:
     try:
         traces_payback = []
         traces_payback_rate = []
@@ -182,7 +184,7 @@ def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years:
 
 
 if __name__ == '__main__':
-    path_file_banks_info = Path(r"C:\Users\DELL\Documents\mortgage\MortgageEyalOrtal\mortgage_israel_bank_info.xlsx")
+    path_file_banks_info = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx")
     results = main_user(banks_info_path=path_file_banks_info)
     a=1
 

@@ -4,15 +4,15 @@ from payback_methods.methods import keren_shava, shpitzer_payment
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import (Callable, Dict, List, Literal, Optional, Tuple, TypeAlias,
-                    cast)
+from typing import (Callable, Dict, List, Literal, Optional, Tuple, 
+                    Union)
 import math
 from utills import cpi_growth
 
 class DataLoader:
     def __init__(self, path: Path) -> None:
         self.path_to_bank_info = path
-        self.data_bank_info: pd.DataFrame | None = None
+        self.data_bank_info: Union[pd.DataFrame , None] = None
         self.unique_bank_names = None
         self.unique_loan_type  =  None
         self.not_index_linked_types = None
@@ -31,7 +31,7 @@ class DataLoader:
                                         #   "change_intrest_index_linked": [self.all_types[3]], "const_intrest_index_linked": [self.all_types[4]]}
            self.combination_dict       = {"Our_Mortgage": [self.all_types[0], self.all_types[2], self.all_types[1], self.all_types[4]]}
 
-    def _load_data_frame(self) -> pd.DataFrame | None:
+    def _load_data_frame(self) -> Union[pd.DataFrame, None]:
         try:
             banks_info = pd.read_excel(self.path_to_bank_info)
             return banks_info
@@ -64,7 +64,7 @@ class SingleLoanType:
     def update_partial_mortgage_amount_nis(self, partial_mortgage_amount_nis: float) -> None:
         self.partial_mortgage_amount_nis = partial_mortgage_amount_nis
 
-    def update_years_or_months(self, years: float|None = None, total_months: float|None=None) -> None:
+    def update_years_or_months(self, years: Union[float, None] = None, total_months: Union[float, None]=None) -> None:
         if years:
            self.years = years 
            self.total_months = years * 12
@@ -220,9 +220,9 @@ class Mortgage():
     def __init__(self, 
                  mortgage_amount_nis: float, 
                  years: float = 15, 
-                 loan_types: List['SingleLoanType'] | None = None, 
-                 num_years_per_loan_type: List[float] | None = None,
-                 loan_types_weights: List[float] | None = None
+                 loan_types: Union[List['SingleLoanType'] , None] = None, 
+                 num_years_per_loan_type: Union[List[float] , None] = None,
+                 loan_types_weights: Union[List[float] , None] = None
                  ) -> None:
         
         self.mortgage_amount_nis = mortgage_amount_nis
@@ -236,9 +236,9 @@ class Mortgage():
                          loan_types_weights=self.loan_types_weights)
     
     def _initialize(self, 
-                    loan_types: List['SingleLoanType'] | None = None, 
-                    num_years_per_loan_type: List[float] | None = None, 
-                    loan_types_weights: List[float] | None = None):
+                    loan_types: Union[List['SingleLoanType'] , None] = None, 
+                    num_years_per_loan_type: Union[List[float] , None] = None, 
+                    loan_types_weights: Union[List[float] , None] = None):
         loan_types = loan_types or []
         self.num_of_types = len(loan_types)
         
@@ -275,7 +275,7 @@ class Mortgage():
                       years: float, 
                       annual_interest_rate: float, 
                       loan_type_name: str,
-                      num_years_per_loan_type: float | None = None):
+                      num_years_per_loan_type: Union[float , None] = None):
          loan_type2add = SingleLoanType(
              partial_mortgage_amount_nis=partial_mortgage_amount_nis, 
              years=years, 

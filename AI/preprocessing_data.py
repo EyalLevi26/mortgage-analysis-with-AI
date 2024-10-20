@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go
+import time
+import warnings
 
 from scipy.stats                   import gaussian_kde, norm
 from statsmodels.graphics.gofplots import qqplot
@@ -17,7 +19,8 @@ from statsmodels.stats.diagnostic  import acorr_ljungbox
 from statsmodels.tsa.statespace import sarimax
 from statsmodels.tsa.stattools import adfuller
 import statsmodels.api as sm
-
+import pmdarima as pm
+from tqdm import tqdm
 
 class LoadTable4CPI:
     def __init__(self, file_path: Path):
@@ -48,18 +51,42 @@ class LoadTable4CPI:
             self.cpi_values_df = pd.read_excel(self.path_to_blumb_data, skiprows=header_row, usecols=[1, 2])
             DateTimeCol = self.cpi_values_df.columns[0]
             AccumulateCpiCol = self.cpi_values_df.columns[1]
-            self.cpi_values_df[DateTimeCol] = pd.to_datetime(self.cpi_values_df[DateTimeCol], format='%Y-%m')
+            self.cpi_values_df[DateTimeCol] = pd.to_datetime(self.cpi_values_df[DateTimeCol], format='%Y-%m').dt.strftime('%Y-%m')
         except ValueError as ve:
               print(f"Value error: {ve}")
               return
         except Exception as e:
                print(f"Error processing data: {e}")
                return
+# Custom callback class to track time and progress
+class ProgressCallback:
+    def __init__(self, total_models):
+        self.total_models = total_models
+        self.start_time = time.time()
+        self.model_count = 0
+        self.progress_bar = tqdm(total=total_models, desc="Fitting models", unit="model")
+
+    def on_fit(self):
+        self.model_count += 1
+        elapsed_time = time.time() - self.start_time
+        average_time = elapsed_time / self.model_count
+        remaining_models = self.total_models - self.model_count
+        estimated_remaining_time = remaining_models * average_time
         
+        # Update progress bar
+        self.progress_bar.update(1)
+        if self.model_count % 200 == 0 or self.model_count == self.total_models:
+           print(f"Fitting model {self.model_count}/{self.total_models}")
+           print(f"Elapsed time: {elapsed_time:.2f} seconds")
+           print(f"Estimated time remaining: {estimated_remaining_time:.2f} seconds\n")
+
+    def close(self):
+        self.progress_bar.close()
+
 class MySARIMAX:
       def __init__(self, cpi_data_obj: LoadTable4CPI, partial_train_percentage: float = 85, apply_model_fitting: bool =False,  use_plotly: bool=True):
          self.cpi_values                         = cpi_data_obj.cpi_values_df[cpi_data_obj.cpi_values_df.columns[1]].values
-         self.dates_cpi_values                   = cpi_data_obj.cpi_values_df[cpi_data_obj.cpi_values_df.columns[0]].dt.strftime('%Y-%m-%d').values
+         self.dates_cpi_values                   = cpi_data_obj.cpi_values_df[cpi_data_obj.cpi_values_df.columns[0]].values
          self.n_cpi_values                       = len(self.cpi_values)
          self.vIdx_cpi_values                    = np.arange(self.n_cpi_values)
 
@@ -77,7 +104,7 @@ class MySARIMAX:
          self.P_D_Q_S = np.array([1, 0, 1, 12])
 
          if apply_model_fitting:
-             self.model_fitting()
+             self.model_fitting(auto_fit_model=True)
 
          self.oTrainModel = None  # Attribute to store the trained model
          self.oTestModel  = None
@@ -92,9 +119,51 @@ class MySARIMAX:
           if print_result:
              print(f"p-value is {self.p_val}, and ADF Statistic is {self.adf_stas}")  
 
-      def model_fitting(self):
+      def model_fitting(self, auto_fit_model=True, plot_acf_vs_diff = False):
+          if plot_acf_vs_diff:
+             # Original Series
+             fig, axes = plt.subplots(3, 2, sharex=True)
+             axes[0, 0].plot(np.log(self.cpi_values)); axes[0, 0].set_title('Original Series')
+             plot_acf(np.log(self.cpi_values), ax=axes[0, 1])
+             
+             # 1st Differencing
+             axes[1, 0].plot(np.diff(np.log(self.cpi_values))); axes[1, 0].set_title('1st Order Differencing')
+             plot_acf(np.diff(np.log(self.cpi_values)), ax=axes[1, 1])
+             
+             # 2nd Differencing
+             axes[2, 0].plot(np.diff(np.diff(np.log(self.cpi_values)))); axes[2, 0].set_title('2nd Order Differencing')
+             plot_acf(np.diff(np.diff(np.log(self.cpi_values))), ax=axes[2, 1])
+             
+             plt.show(block=True)
+          
           self._preprocess()
           self.check_adf(print_result=True)
+
+          if auto_fit_model:
+             total_models = 3587
+             progress_callback = ProgressCallback(total_models)
+             def fit_auto_arima(y):
+                 model = pm.auto_arima(y=y, 
+                                       start_p =1, 
+                                       start_q= 1, 
+                                       m=12,
+                                       maxiter =100, 
+                                       error_action='ignore', 
+                                       verbose=True, 
+                                       stepwise = False,
+                                       callback= lambda n_jobs, *args, **kwargs: progress_callback.on_fit())
+                 return model
+             model = fit_auto_arima(self.data_train_vX)
+             progress_callback.close()             
+             print(model.summary())
+             p, d, q = model.order
+             P, D, Q, S = model.seasonal_order
+             self.p_d_q     = np.array([p, d, q])
+             self.P_D_Q_S   = np.array([P, D, Q, S])
+             self._inverse_preprocess()
+             best_model_aic = {'p':p, 'd':d, 'q':q, 'P':P, 'D': D, 'Q':Q, 'S':S}
+             return best_model_aic
+
 
           vD = np.arange(4)
           vd = np.arange(4)
@@ -104,6 +173,9 @@ class MySARIMAX:
           vQ = np.arange(2)
           vS = np.array([12])
           T  = pd.DataFrame(columns=['p', 'd', 'q', 'P', 'D','Q', 'S', 'AIC', 'BIC'])
+          total_models = len(vD)*len(vd)*len(vp)*len(vq)*len(vP)*len(vQ)*len(vS)
+
+          progress_callback = ProgressCallback(total_models)
           for pp in vp:
               for qq in vq:
                   for dd in vd:
@@ -112,14 +184,18 @@ class MySARIMAX:
                               for QQ in vQ:
                                   for S in vS:
                                       try:
+                                          warnings.filterwarnings("ignore", category=UserWarning, message=".*Maximum Likelihood optimization failed to converge.*")
+                                          warnings.filterwarnings("ignore", category=UserWarning, message=".*Non-invertible starting seasonal moving average.*")
+
                                           oModel = sarimax.SARIMAX(self.data_train_vX, 
                                                                    order=(pp, dd, qq), 
                                                                    seasonal_order=(PP, DD, QQ, S), 
-                                                                   trend='c').fit(maxiter=100)  # Increased maxiter and changed method
+                                                                   trend='c').fit(maxiter=100, disp=False)  # Increased maxiter and changed method
                                           T.loc[len(T)] = [pp, dd, qq, PP, DD, QQ, S, oModel.aic, oModel.bic]
+                                          progress_callback.on_fit()
                                       except (ValueError, np.linalg.LinAlgError) as e:
                                           print(f"Skipped combination (p={pp}, q={qq}, P={PP}, Q={QQ}, S={S}) due to error: {e}")
-
+          progress_callback.close()
           best_model_aic = T.sort_values(by='AIC').iloc[0]
           self.p_d_q     = np.array([best_model_aic["p"], best_model_aic["d"], best_model_aic["q"]])
           self.P_D_Q_S   = np.array([best_model_aic["P"], best_model_aic["D"], best_model_aic["Q"], best_model_aic["S"]])
@@ -229,6 +305,14 @@ class MySARIMAX:
         pred_mean  = prediction.predicted_mean
         pred_mean  = np.exp(pred_mean)
         vPredIdx   = np.arange(start, self.n_cpi_values + steps_ahead) 
+        
+        dates = self.dates_cpi_values[np.arange(0, self.n_cpi_values)]
+
+        dates_datetime = pd.to_datetime(dates, format='%Y-%m')
+        additional_dates = [dates_datetime[-1] + pd.DateOffset(months=i) for i in range(1, steps_ahead + 1)]
+        all_dates = np.concatenate([dates_datetime, additional_dates])
+        all_dates = pd.to_datetime(all_dates)
+        all_dates_pred = all_dates.strftime('%Y-%m').values
 
         if return_conf_int:
             pred_conf_int = prediction.conf_int(alpha=0.05)
@@ -239,6 +323,7 @@ class MySARIMAX:
                plot_data = {
                             'pred_mean': pred_mean,
                             'vPredIdx': vPredIdx,
+                            'all_dates_pred':all_dates_pred,
                             'pred_conf_int': pred_conf_int
                             }
                self.visualize_results(plot_data)  
@@ -249,15 +334,18 @@ class MySARIMAX:
                plot_data = {
                             'pred_mean': pred_mean,
                             'vPredIdx': vPredIdx,
+                            'all_dates_pred':all_dates_pred,
                             'pred_conf_int': None
                             }
                self.visualize_results(plot_data)  
             return pred_mean
       
       def visualize_results(self, plot_data):
-           pred_mean     = plot_data['pred_mean']
-           pred_conf_int = plot_data['pred_conf_int']
-           vPredIdx      = plot_data['vPredIdx']
+           pred_mean      = plot_data['pred_mean']
+           pred_conf_int  = plot_data['pred_conf_int']
+           vPredIdx       = plot_data['vPredIdx']
+           all_dates_pred = plot_data['all_dates_pred']
+
            n_train = len(self.data_train_vX)
            p, d, q    = self.p_d_q
            P, D, Q, S = self.P_D_Q_S
@@ -280,36 +368,38 @@ class MySARIMAX:
 
               # Plot train data
               fig.add_trace(go.Scatter(
-                  x=self.vIdx_cpi_values[:n_train],
+                  x=self.dates_cpi_values[self.vIdx_cpi_values[:n_train]],
                   y=self.data_train_vX,
                   mode='lines',
                   name='train',
-                #   hovertemplate='Month: %{x}<br>Index Value: %{y:.2f}<extra></extra>' ,
+                  hovertemplate='Year-Month: %{x}<br>Index Value: %{y:.2f}<extra></extra>',
                   line=dict(color='blue', width=1.5)
               ))
               
               # Plot test data
               fig.add_trace(go.Scatter(
-                  x=self.vIdx_cpi_values[n_train:],
+                  x=self.dates_cpi_values[self.vIdx_cpi_values[n_train:]],
                   y=self.data_test_vX,
                   mode='lines',
                   name='test',
+                  hovertemplate='Year-Month: %{x}<br>Index Value: %{y:.2f}<extra></extra>',
                   line=dict(color='orange', width=1.5)
               ))
               
               # Plot prediction data
               fig.add_trace(go.Scatter(
-                  x=vPredIdx,
+                  x=all_dates_pred[vPredIdx],
                   y=pred_mean,
                   mode='lines',
                   name='$\hat{x}_n$',
+                  hovertemplate='Year-Month: %{x}<br>Index Value: %{y:.2f}<extra></extra>',
                   line=dict(color='red', width=1.5)
               ))
               
               if pred_conf_int is not None:
                  # Add fill for confidence interval (95% CI)
                  fig.add_trace(go.Scatter(
-                     x=np.concatenate([vPredIdx, vPredIdx[::-1]]),
+                     x=np.concatenate([all_dates_pred[vPredIdx], all_dates_pred[vPredIdx[::-1]]]),
                      y=np.concatenate([pred_conf_int[:, 0], pred_conf_int[:, 1][::-1]]),
                      fill='toself',
                      fillcolor='rgba(255, 0, 0, 0.15)',
@@ -327,8 +417,8 @@ class MySARIMAX:
                   xaxis_title='Date',
                   yaxis_title='Index Value',
                   xaxis=dict(
-                      tickvals=self.vIdx_cpi_values[6::80],  # Adjust xticks as per original
-                      ticktext=self.dates_cpi_values[6::80]
+                      tickvals=all_dates_pred[vPredIdx[0::50]],  # Adjust xticks as per original
+                      ticktext=all_dates_pred[vPredIdx[0::50]]
                   ),
                   legend=dict(
                       orientation="v",
