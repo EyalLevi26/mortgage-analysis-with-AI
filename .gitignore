@@ -1,0 +1,11 @@
+# Ignore all .log files
+*.log
+
+# Ignore the 'build' directory
+build/
+
+# Ignore virtual environment
+myenv/
+
+__pycache__/
+**/__pycache__/
