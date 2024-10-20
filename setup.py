@@ -12,7 +12,6 @@ setup(
     install_requires=[
         'pmdarima',  # List the main dependencies here
         'plotly',
-        'pathlib',
         'pandas',
         'numpy',
         'matplotlib',
@@ -21,6 +20,8 @@ setup(
         'tqdm',
         'tabloo',
         'openpyxl',
+        'argparse',
+        'pyinstaller',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

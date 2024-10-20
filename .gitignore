@@ -7,6 +7,8 @@ build/
 # Ignore virtual environment
 myenv/
 myenv_new/
+dist/
+mortgage_analysis_cli.spec
 
 __pycache__/
 **/__pycache__/

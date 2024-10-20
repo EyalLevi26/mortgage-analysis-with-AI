@@ -1,10 +1,15 @@
-
+__all__ = ['create_table_for_bank_and_risk', 'cpi_growth','import_package']
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import matplotlib.pyplot as plt
 from payback_methods.methods import shpitzer_payment
+
+import sys
+import subprocess
+from importlib.util import find_spec
+from types import ModuleType
 
 # import plotly.offline as pyo  # Import the offline mode
 
@@ -270,7 +275,7 @@ def create_table_for_bank_and_risk(risk_level, bank_name, mortgage_per_risk_per_
 
 def cpi_growth(years, growth_pattern_monthly_term: bool =True):
     cpi = [100]  # Starting CPI value at 100 in 2024
-    
+
     years_vec = np.arange(2024, 2024 + years)
     
     growth_pattern = []
@@ -281,7 +286,9 @@ def cpi_growth(years, growth_pattern_monthly_term: bool =True):
             growth_rate_rand = np.random.uniform(1.04, 1.06)
 
         growth_pattern.append(growth_rate_rand)
-        cpi.append(cpi[-1] * growth_rate_rand)
+        if not growth_pattern_monthly_term:
+            cpi.append(cpi[-1] * growth_rate_rand)
+
     growth_pattern_np = np.array(growth_pattern) - 1
     growth_pattern_np = np.insert(growth_pattern_np, 0, 0)
     
@@ -291,6 +298,7 @@ def cpi_growth(years, growth_pattern_monthly_term: bool =True):
            for i_month in range(12):
                if i_year == 0 and i_month == 0: continue
                growth_pattern_np_monthly.append(growth_pattern_np[i_year+1] / 12) 
+               cpi.append(cpi[-1] * (growth_pattern_np[i_year+1] / 12))
         #    if i_year == len(growth_pattern_np) - 2:
         #       for i_month in range(12):
         #           growth_pattern_np_monthly.append(growth_pattern_np[i_year] / 12)  
@@ -299,6 +307,47 @@ def cpi_growth(years, growth_pattern_monthly_term: bool =True):
        return np.array(cpi), growth_pattern_np_monthly
 
     return np.array(cpi), growth_pattern_np
+
+def import_package(PACKAGE_NAME: str,
+                   PACKAGE_PATH: str) -> ModuleType:
+    """Import package if it is not installed, otherwise return the package
+
+    Parameters
+    ----------
+    PACKAGE_NAME : str
+        package name
+    PACKAGE_PATH : str
+        package path
+
+    Returns
+    -------
+    package : ModuleType
+        package module
+
+    Raises
+    ------
+    ImportError
+        Failed to load or install package
+    """
+    if find_spec(PACKAGE_NAME) is not None:  # package is already installed
+        loader = getattr(find_spec(PACKAGE_NAME), "loader")
+        if loader is not None:
+            package = loader.load_module()
+        else:
+            raise ImportError(f"Failed to load {PACKAGE_NAME} module")
+        return package
+    else:  # package is not installed
+        COMMAND = [sys.executable, "-m", "pip", "install", PACKAGE_PATH]
+        subprocess.check_call(COMMAND)
+        if find_spec(PACKAGE_NAME) is not None:
+            loader = getattr(find_spec(PACKAGE_NAME), "loader")
+            if loader is not None:
+                package = loader.load_module()
+            else:
+                raise ImportError(f"Failed to load {PACKAGE_NAME} module")
+        else:
+            raise ImportError(f"Failed to install {PACKAGE_NAME} module")
+        return package
 
 
 if __name__ == '__main__':
@@ -341,4 +390,5 @@ if __name__ == '__main__':
                                                    years=years, 
                                                    annual_interest_rate=annual_interest_rate,
                                                    monthly_cpi_index=monthly_cpi_index)
+
 

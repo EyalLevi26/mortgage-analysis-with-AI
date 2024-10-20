@@ -4,8 +4,7 @@ from payback_methods.methods import keren_shava, shpitzer_payment
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import (Callable, Dict, List, Literal, Optional, Tuple, 
-                    Union)
+from typing import (List, Union)
 import math
 from utills import cpi_growth
 
@@ -29,7 +28,7 @@ class DataLoader:
         #                                   "change_intrest_index_linked": [self.all_types[3]], "const_intrest_index_linked": [self.all_types[4]]}
         #    self.combination_dict       = {"const_intrest_not_index_linked": self.very_low_risk_type, "change_intrest_not_index_linked_prime": [self.all_types[1]], "change_intrest_not_index_linked": [self.all_types[2]],
                                         #   "change_intrest_index_linked": [self.all_types[3]], "const_intrest_index_linked": [self.all_types[4]]}
-           self.combination_dict       = {"Our_Mortgage": [self.all_types[0], self.all_types[2], self.all_types[1], self.all_types[4]]}
+           self.combination_dict       = {"Our_Mortgage": [self.all_types[0], self.all_types[1], self.all_types[2], self.all_types[3], self.all_types[4]]}
 
     def _load_data_frame(self) -> Union[pd.DataFrame, None]:
         try:
