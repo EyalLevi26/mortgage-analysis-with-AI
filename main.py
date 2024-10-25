@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
 from utills import create_table_for_bank_and_risk, import_package
-from typing import Union, Sequence
+from typing import Union, Sequence, List, Optional
 from arg_parser import CLIArgumentParser
 # import pickle
 # import os
@@ -20,7 +20,7 @@ from arg_parser import CLIArgumentParser
 # blog_parser = import_package(PACKAGE_NAME="blog_parser",
                                 #    PACKAGE_PATH=".venv\\Lib\\site-packages\\blog_parser")
 
-def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15) ->  Union[pd.DataFrame, None]:
+def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15, loan_types_weights: Union[List[float] , None] = None, num_years_per_loan_type: Union[List[float] , None] = None, bank_name_for_plot: str = 'Benleomi') ->  Optional[List[Union[go.Figure, List[go.Figure]]]]:
     try:
         traces_payback = []
         traces_payback_rate = []
@@ -42,33 +42,14 @@ def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years:
                 loan_types_per_risk_per_bank[risk_level][bank_name] = SingleLoanType.create_new_instances(partial_mortgage_amount_nis= mortgage_amount_nis / len(mix_loan_types),
                                                                                                           years= years, 
                                                                                                           banks_info_data=bank_info_instance,
-                                                                                                           bank_name= bank_name,
+                                                                                                          bank_name= bank_name,
                                                                                                           mix_loan_types= mix_loan_types)
-                if risk_level == 'Our_Mortgage':
-                    if len(mix_loan_types) == 3:
-                        # [const_intrest_not_index_linked, change_intrest_not_index_linked, change_intrest_not_index_linked_prime]
-                        num_years_per_loan_type = [15, 15, 15]
-                        loan_types_weights      = [33.3333, 50, 16.6667]
-                    elif len(mix_loan_types) == 4:
-                         # [const_intrest_not_index_linked, change_intrest_not_index_linked, change_intrest_not_index_linked_prime, const_intrest_index_linked]
-                         num_years_per_loan_type = [5, 15, 15, 5]
-                        #  loan_types_weights      = [33.3333, 1, 16.6667, 49]
-                        # loan_types_weights      = [33.3333, 25, 16.6667, 25]
-                         loan_types_weights      = [0, 0, 0, 100]
-                    elif  len(mix_loan_types) == 5:
-                          num_years_per_loan_type = [5, 15, 15, 5, 15]
-                          loan_types_weights      = [0, 0, 0, 0, 100]
-                    else:
-                        num_years_per_loan_type = None
-                        loan_types_weights = None
-                else:
-                    num_years_per_loan_type = None
-                    loan_types_weights = None
 
-                mortgage_instance = Mortgage(mortgage_amount_nis=mortgage_amount_nis, loan_types=loan_types_per_risk_per_bank[risk_level][bank_name],
-                                              years=years, 
-                                              num_years_per_loan_type=num_years_per_loan_type, 
-                                              loan_types_weights=loan_types_weights)
+                mortgage_instance = Mortgage(mortgage_amount_nis=mortgage_amount_nis, 
+                                             loan_types=loan_types_per_risk_per_bank[risk_level][bank_name],
+                                             years=years, 
+                                             num_years_per_loan_type=num_years_per_loan_type, 
+                                             loan_types_weights=loan_types_weights)
                 
                 if risk_level not in mortgage_per_risk_per_bank:
                    mortgage_per_risk_per_bank[risk_level] = {}
@@ -167,29 +148,32 @@ def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years:
         fig.update_yaxes(title_text="Payback [nis]", row=1, col=1)
         fig.update_yaxes(title_text="Payback Rate", row=2, col=1)  
 
-        # fig.show()
-        # 
-        # fig = go.Figure(data=traces_payback, layout=layout_payback)
-        # fig.show()
-        # 
-        # fig = go.Figure(data=traces_payback_rate, layout=layout_payback_rate)
-        # fig.show()
+        fig.show()
         
-        loan_table, table_shpizer, table_keren_shava = create_table_for_bank_and_risk(risk_level='Our_Mortgage', 
-                                                    bank_name ='Benleomi', 
+        fig = go.Figure(data=traces_payback, layout=layout_payback)
+        fig.show()
+        
+        fig = go.Figure(data=traces_payback_rate, layout=layout_payback_rate)
+        fig.show()
+        
+        loan_table, table_shpizer, table_keren_shava, figs = create_table_for_bank_and_risk(risk_level='Our_Mortgage', 
+                                                    bank_name = bank_name_for_plot, 
                                                     mortgage_per_risk_per_bank = mortgage_per_risk_per_bank,
                                                     mortgage_amount_nis = mortgage_amount_nis)
         loan_table.show()
+        for fig in figs:
+            fig.show()
+            
         table_shpizer.show()
         table_keren_shava.show()
-
-        return None
+     
+        return [loan_table, table_shpizer, table_keren_shava, figs]
 
     except KeyboardInterrupt:
         print("Exiting...")
         return None
 
-def main_cli(argv: Union[Sequence[str] , None] = None) -> Union[pd.DataFrame , None]:
+def main_cli(argv: Union[Sequence[str] , None] = None) -> Optional[List[Union[go.Figure, List[go.Figure]]]]:
     """Command Line Interface for mortgage analysis. This function processes the mortgage data, 
     calculates payback amounts and rates for different loan types and risk levels, and generates 
     plots to visualize the results.
@@ -377,45 +361,53 @@ def main_cli(argv: Union[Sequence[str] , None] = None) -> Union[pd.DataFrame , N
         fig.update_xaxes(title_text="Bank", row=2, col=1)
         fig.update_yaxes(title_text="Payback [nis]", row=1, col=1)
         fig.update_yaxes(title_text="Payback Rate", row=2, col=1)  
-
-        # fig.show()
-        # 
-        # fig = go.Figure(data=traces_payback, layout=layout_payback)
-        # fig.show()
-        # 
-        # fig = go.Figure(data=traces_payback_rate, layout=layout_payback_rate)
-        # fig.show()
         
-        loan_table, table_shpizer, table_keren_shava = create_table_for_bank_and_risk(risk_level='Our_Mortgage', 
+        if args.plot_results:
+            fig.show()
+
+            fig = go.Figure(data=traces_payback, layout=layout_payback)
+            fig.show()
+
+            fig = go.Figure(data=traces_payback_rate, layout=layout_payback_rate)
+            fig.show()
+        
+        loan_table, table_shpizer, table_keren_shava, figs = create_table_for_bank_and_risk(risk_level='Our_Mortgage', 
                                                     bank_name =args.bank_name, 
                                                     mortgage_per_risk_per_bank = mortgage_per_risk_per_bank,
                                                     mortgage_amount_nis = float(args.mortgage_amount_nis))
-        loan_table.show()
-        table_shpizer.show()
-        table_keren_shava.show()
+        if args.plot_results:
+            loan_table.show()
+            for fig in figs:
+                fig.show()
 
-        return None
+            table_shpizer.show()
+            table_keren_shava.show()
+        
+
+        return [loan_table, table_shpizer, table_keren_shava, figs]
     
     except KeyboardInterrupt:
         print("Exiting...")
         return None
 
 if __name__ == '__main__':
-    # path_file_banks_info = Path(r"C:\Users\eyall\Desktop\mortgage_eyal_ortal_levi\mortgage_israel_bank_info.xlsx")
-    # results = main_user(banks_info_path=path_file_banks_info)
-
-    # path_file_banks_info = Path(r"C:\Users\eyall\Desktop\mortgage_eyal_ortal_levi\mortgage_israel_bank_info.xlsx")
-    # results = main_cli()
-    # results = main_cli(
-            # [r"C:\Users\eyall\Desktop\mortgage_eyal_ortal_levi\mortgage_israel_bank_info.xlsx"] +
-            # "-m 1200000 -y 15 -b Benleomi -w [0,0,0,0,100] -yl [10,10,10,10,15]".split())
     if len(sys.argv) == 1:
+        path_file_banks_info = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx")
         warnings.simplefilter('always', RuntimeWarning)
-        results = main_cli(
-                [r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx"] +
-                "-m 1200000 -y 15 -b Benleomi -w [0,0,0,0,100] -yl [10,10,10,10,15]".split())
+        loan_types_weights = [33, 0, 67, 0, 0] 
+        num_years_per_loan_type = [5, 15, 15, 5, 15]
+        results = main_user(banks_info_path=path_file_banks_info, 
+                            mortgage_amount_nis = 1200000, 
+                            years = 20,
+                            loan_types_weights=loan_types_weights,
+                            num_years_per_loan_type = num_years_per_loan_type)
+        
+        # results = main_cli(
+                # [r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx"] +
+                # "-m 1200000 -y 15 -b Benleomi -w [0,0,0,0,100] -yl [10,10,10,10,15] -plot".split())
     else:
         main_cli()
     # a=1
 
 
+# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]"

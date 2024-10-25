@@ -68,7 +68,7 @@ class CLIArgumentParser:
         self.loan_types_weights: str = self._args.loan_types_weights
         self.num_years_per_loan_type: str = self._args.num_years_per_loan_type
         self.save_file_path = Path(self._args.save_file_path)
-        self.save_file_name: str = self.banks_info_path.name  # self._args.save_file_name
+        self.save_file_name: str = self._args.save_file_name  
         self.save_file_fmt: str = self._args.save_file_fmt
         self.plot_results: bool = self._args.plot_results
         self.n_jobs: int = self._args.n_jobs

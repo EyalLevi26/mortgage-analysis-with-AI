@@ -86,7 +86,7 @@ def create_table_for_bank_and_risk(risk_level, bank_name, mortgage_per_risk_per_
     
     # Add title for the table
     table.update_layout(title_text=f"Loan Details for {bank_name} - {risk_level} Risk Level")
-    
+    figs = []
     for i_loan, loan in enumerate(loan_types): 
         if loan.partial_mortgage_amount_nis == 0: continue
         breakdown = loan.calculate_interest_and_principal_breakdown()
@@ -219,59 +219,9 @@ def create_table_for_bank_and_risk(risk_level, bank_name, mortgage_per_risk_per_
         fig.update_yaxes(title_text="Interest/Principal Percentage [%] ", row=2, col=2)
         fig.update_layout(showlegend=True)
 
-        fig.show()
-    
-    # for i_loan, loan in enumerate(loan_types): 
-    #     breakdown = loan.calculate_interest_and_principal_breakdown()
-    #     months = [entry['Month'] for entry in breakdown]
-    #     interest_payments = [entry['Interest Payment'] for entry in breakdown]
-    #     principal_payments = [entry['Principal Payment'] for entry in breakdown]
-    #     total_payments = [entry['Total Payment'] for entry in breakdown]
-    #     principal_percentage = [entry['Principal Percentage'] for entry in breakdown]
-    #     interest_percentage = [entry['Interest Percentage'] for entry in breakdown]
-    #     remaining_balances = [entry['Remaining Balance'] for entry in breakdown]
-        
-    #     interest_payments = [round(payment, 2) for payment in interest_payments]
-    #     principal_payments = [round(payment, 2) for payment in principal_payments]
-    #     remaining_balances = [round(balance, 2) for balance in remaining_balances]
-
-    #     header_values = ["Month", "Interest Payment (NIS)", "Principal Payment (NIS)", "Toatl Payment (NIS)", 
-    #                      "Principal Percentage", "Interest Percentage", "Remaining Balance (NIS)"]
-
-    #     cell_values = [months, interest_payments, principal_payments, total_payments, principal_percentage, interest_percentage, remaining_balances]
-        
-    #     fig = make_subplots(
-    #     rows=2, cols=1,
-    #     subplot_titles=[f"Mortgage Payment Breakdown (Shpitzer Method) - Bank: {bank_name} - {loan.loan_type_name}",
-    #                                     "Remaining Balance (NIS) vs Months"],
-    #     row_heights=[0.5, 0.5],  # 50% height for table and 50% for the plot
-    #     vertical_spacing=0.2,  # Space between the plots
-    #     specs=[[{"type": "table"}], [{"type": "scatter"}]]  # First row is table, second is scatter plot
-    #     )
-
-    #     fig.add_trace(go.Table(
-    #         header=dict(values=header_values,
-    #                     fill_color='paleturquoise',
-    #                     align='left'),
-    #         cells=dict(values=cell_values,
-    #                    fill_color='lavender',
-    #                    align='left'))
-    #         , row=1, col=1
-    #     )
-
-    #     fig.add_trace(go.Scatter(
-    #         x=months, 
-    #         y=remaining_balances, 
-    #         mode='lines+markers', 
-    #         name='Remaining Balance',
-    #         line=dict(color='royalblue', width=2)
-    #     ), row=2, col=1)
-        
-    #     fig.update_xaxes(title_text="Month", row=2, col=1)
-    #     fig.update_yaxes(title_text="Remaining Balance (NIS)", row=2, col=1)
-    #     fig.update_layout(showlegend=False)
-    #     fig.show()
-    return table, table_shpizer, table_keren_shava
+        # fig.show()
+        figs.append(fig)
+    return table, table_shpizer, table_keren_shava, figs
 
 def cpi_growth(years, growth_pattern_monthly_term: bool =True):
     cpi = [100]  # Starting CPI value at 100 in 2024

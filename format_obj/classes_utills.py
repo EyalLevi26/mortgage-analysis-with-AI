@@ -4,40 +4,76 @@ from payback_methods.methods import keren_shava, shpitzer_payment
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import (List, Union)
+from typing import (List, Union, Dict)
 import math
 from utills import cpi_growth
 
 class DataLoader:
+    """
+    A class to load and process bank loan information from an Excel file.
+    """
+    
     def __init__(self, path: Path) -> None:
+        """
+        Initializes the DataLoader with the path to the bank info file.
+
+        Parameters:
+            path (Path): The file path to the bank information Excel file.
+        """
         self.path_to_bank_info = path
-        self.data_bank_info: Union[pd.DataFrame , None] = None
+        self.data_bank_info: Union[pd.DataFrame, None] = None
         self.unique_bank_names = None
-        self.unique_loan_type  =  None
+        self.unique_loan_types = None
         self.not_index_linked_types = None
 
         self.data_bank_info = self._load_data_frame()
-        if not self.data_bank_info.empty:
-           self.unique_bank_names = self.data_bank_info["Bank"].unique()
-           self.unique_loan_type  = self.data_bank_info["loan_type"].unique()
-           self.not_index_linked_types = self.unique_loan_type[np.char.find(self.unique_loan_type.astype(str), 'not index-linked') != -1]
-           self.very_low_risk_type     = self.unique_loan_type[np.char.find(self.unique_loan_type.astype(str), 'Constant interest rate and not index-linked') != -1]
-           self.all_types              = self.unique_loan_type[:-1]
-        #    self.combination_dict       = {"const_intrest_not_index_linked": self.very_low_risk_type, "middle_risk": self.not_index_linked_types, "all": self.all_types,
-        #                                   "change_intrest_not_index_linked_prime": [self.all_types[1]], "change_intrest_not_index_linked": [self.all_types[2]],
-        #                                   "change_intrest_index_linked": [self.all_types[3]], "const_intrest_index_linked": [self.all_types[4]]}
-        #    self.combination_dict       = {"const_intrest_not_index_linked": self.very_low_risk_type, "change_intrest_not_index_linked_prime": [self.all_types[1]], "change_intrest_not_index_linked": [self.all_types[2]],
-                                        #   "change_intrest_index_linked": [self.all_types[3]], "const_intrest_index_linked": [self.all_types[4]]}
-           self.combination_dict       = {"Our_Mortgage": [self.all_types[0], self.all_types[1], self.all_types[2], self.all_types[3], self.all_types[4]]}
+        self._process_data()
 
     def _load_data_frame(self) -> Union[pd.DataFrame, None]:
+        """
+        Loads the data from the Excel file.
+
+        Returns:
+            Union[pd.DataFrame, None]: A DataFrame containing bank information, or None if loading fails.
+        """
         try:
-            banks_info = pd.read_excel(self.path_to_bank_info)
-            return banks_info
+            return pd.read_excel(self.path_to_bank_info)
         except Exception as e:
             print(f"Error loading data: {e}")
             return None
-        
+
+    def _process_data(self) -> None:
+        """
+        Processes the loaded data to extract unique bank names and loan types.
+        """
+        if self.data_bank_info is not None and not self.data_bank_info.empty:
+            self.unique_bank_names = self.data_bank_info["Bank"].unique()
+            self.unique_loan_types = self.data_bank_info["loan_type"].unique()
+            self.not_index_linked_types = self.unique_loan_types[
+                np.char.find(self.unique_loan_types.astype(str), 'not index-linked') != -1
+            ]
+            self.very_low_risk_type = self.unique_loan_types[
+                np.char.find(self.unique_loan_types.astype(str), 'Constant interest rate and not index-linked') != -1
+            ]
+            self.all_types = self.unique_loan_types.tolist()[:-1]  # Convert to list for easier indexing
+
+            # Dictionary to map loan types to descriptive names
+            self.loan_type_descriptions: Dict[str, str] = {
+                "const_interest_not_index_linked": self.all_types[0],
+                "change_interest_not_index_linked_prime": self.all_types[1],
+                "change_interest_not_index_linked": self.all_types[2],
+                "change_interest_index_linked": self.all_types[3],
+                "const_interest_index_linked": self.all_types[4]
+            }
+
+            # Define combinations in a dictionary
+            self.combination_dict = {
+                "Our_Mortgage": list(self.loan_type_descriptions.values())  # Use all loan types
+            }
+            
+            # Print loan type descriptions for reference
+            # for key, value in self.loan_type_descriptions.items():
+                # print(f"{key}: {value}")        
 
 class SingleLoanType:
     def __init__(self, partial_mortgage_amount_nis: float, years: float, annual_interest_rate: float, loan_type_name: str) -> None:
@@ -305,78 +341,3 @@ class Mortgage():
         }
         return payback_rate
     
-# class Mortgage():
-#     def __init__(self, 
-#                  mortgage_amount_nis: float = 1200000, 
-#                  years: float = 15, 
-#                  loan_types: List[SingleLoanType] | None = None, 
-#                  num_years_per_loan_type: List[float] | None = None,
-#                  loan_types_weights: List[float] | None = None
-#                  ) -> None:
-        
-#         self.mortgage_amount_nis = mortgage_amount_nis
-#         self.max_num_of_years_all_types = years
-#         self.loan_types = loan_types
-#         self.num_of_types = len(loan_types)
-#         self.loan_types_weights = loan_types_weights
-#         self.num_years_per_loan_type = num_years_per_loan_type       
-#         self._initialize(loan_types=loan_types, num_years_per_loan_type=num_years_per_loan_type, loan_types_weights= loan_types_weights)
-    
-#     def _initialize(self, loan_types: List[SingleLoanType] | None = [], num_years_per_loan_type: List[float] | None = [], loan_types_weights: List[float] | None = None):
-#         self.loan_types = loan_types
-#         self.num_of_types = len(loan_types)
-        
-#         if not loan_types_weights and self.num_of_types > 0:
-#             if math.isclose(sum(loan_types_weights), 1)  and  math.isclose(len(loan_types_weights), self.num_of_types):
-#                self.loan_types_weights = loan_types_weights
-#             elif math.isclose(sum(loan_types_weights), 100) and  math.isclose(len(loan_types_weights), self.num_of_types):
-#                self.loan_types_weights = loan_types_weights / 100   
-#             else:
-#                self.loan_types_weights = [1 / self.num_of_types for i in range(self.num_of_types)]    
-
-#         elif self.num_of_types > 0:
-#             self.loan_types_weights = [1 / self.num_of_types for i in range(self.num_of_types)] 
-#         else: 
-#             self.loan_types_weights = []
-        
-#         if not num_years_per_loan_type:
-#             num_years_per_loan_type_tmp = [min(num_years, max(num_years_per_loan_type)) for num_years in num_years_per_loan_type]
-#             if not self.loan_types_weights and math.isclose(len(num_years_per_loan_type), self.num_of_types):
-#                self.num_years_per_loan_type = num_years_per_loan_type_tmp
-#             elif not self.loan_types_weights:
-#                 self.num_years_per_loan_type = [max(num_years_per_loan_type_tmp) for ii in range(self.num_of_types)]
-#             else:
-#                self.num_years_per_loan_type = []    
-#         else:
-#             self.num_years_per_loan_type = []
-    
-
-#     def add_loan_type(self, 
-#                       partial_mortgage_amount_nis: float, 
-#                       years: float, 
-#                       annual_interest_rate: float, 
-#                       loan_type_name: str,
-#                       num_years_per_loan_type: float |None = None):
-#          loan_type2add = SingleLoanType(partial_mortgage_amount_nis= partial_mortgage_amount_nis, 
-#                                         years=years, 
-#                                         annual_interest_rate=annual_interest_rate, 
-#                                         loan_type_name=loan_type_name)
-#          self.loan_types.append(loan_type2add)
-#          self._initialize(loan_types= self.loan_types, 
-#                           num_years_per_loan_type=num_years_per_loan_type, 
-#                           loan_types_weights = None)
-    
-#     def calc_total_payback_for_all_mortgage(self):
-#         total_payback = {"shpizer": 0, "keren_shava": 0}
-#         for single_loan_type in self.loan_types:
-#             total_payback_pew_type_dict= single_loan_type.calc_total_payback()
-#             total_payback["shpizer"] += total_payback_pew_type_dict["shpizer"]
-#             total_payback["keren_shava"] += total_payback_pew_type_dict["keren_shava"]
-
-#         return total_payback
-        
-#     def calc_total_payback_rate_for_all_mortgage(self):
-#         total_payback = calc_total_payback_for_all_mortgage()
-#         payback_rate = {"shpizer": total_payback["shpizer"] / self.mortgage_amount_nis, "keren_shava": total_payback["keren_shava"] / self.mortgage_amount_nis}
-            
-#         return payback_rate

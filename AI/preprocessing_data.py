@@ -23,6 +23,27 @@ import pmdarima as pm
 from tqdm import tqdm
 
 class LoadTable4CPI:
+    """
+    The LoadTable4CPI class loads and processes Consumer Price Index (CPI) data from an Excel file.
+
+    Attributes:
+    ----------
+    path_to_blumb_data : Path
+        The file path of the Excel file containing the CPI data.
+    cpi_values_df : pandas.DataFrame or None
+        A DataFrame that holds the CPI data, including time periods and CPI values. 
+        Initialized to None and populated once the data is successfully loaded and processed.
+
+    Methods:
+    -------
+    __init__(self, file_path: Path)
+        Initializes the LoadTable4CPI object with the path to the Excel file and triggers the 
+        data loading process by calling the _initialize method.
+    
+    _initialize(self)
+        Reads and processes the Excel file. It attempts to find the starting row of the CPI data, 
+        processes the data into a DataFrame, and formats the date column for further use.
+    """
     def __init__(self, file_path: Path):
          self.path_to_blumb_data = file_path
          self.cpi_values_df = None
