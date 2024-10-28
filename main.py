@@ -12,6 +12,9 @@ from plotly.subplots import make_subplots
 from utills import create_table_for_bank_and_risk, import_package
 from typing import Union, Sequence, List, Optional
 from arg_parser import CLIArgumentParser
+from plot_utils import plot_tables_and_figures
+import matplotlib.pyplot as plt
+
 # import pickle
 # import os
 # import tabloo
@@ -20,8 +23,11 @@ from arg_parser import CLIArgumentParser
 # blog_parser = import_package(PACKAGE_NAME="blog_parser",
                                 #    PACKAGE_PATH=".venv\\Lib\\site-packages\\blog_parser")
 
-def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15, loan_types_weights: Union[List[float] , None] = None, num_years_per_loan_type: Union[List[float] , None] = None, bank_name_for_plot: str = 'Benleomi') ->  Optional[List[Union[go.Figure, List[go.Figure]]]]:
+def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years: float = 15, loan_types_weights: Union[List[float] , None] = None, 
+              num_years_per_loan_type: Union[List[float] , None] = None, bank_name_for_plot: str = 'Benleomi', 
+              extenal_plot: bool = False) ->  Optional[List[Union[go.Figure, List[go.Figure]]]]:
     try:
+        figs_tmp = []
         traces_payback = []
         traces_payback_rate = []
         bank_info_instance = DataLoader(path=banks_info_path)
@@ -69,104 +75,37 @@ def main_user(banks_info_path: Path, mortgage_amount_nis: float = 100000, years:
                                                     # loan_types_per_risk_per_bank=loan_types_per_risk_per_bank,
                                                     # mortgage_amount_nis= mortgage_amount_nis)
                 # loan_table.show()
-
             trace = go.Scatter(x=bank_names_list,    
                                 y=total_payback_shpizer_per_bank,         
                                 mode='lines+markers',    
                                 name=f'Payback in NIS - {risk_level}- Shpizer Method'  # Ensure unique trace names
-                               ) 
-
+                               )
             traces_payback.append(trace)
-
             trace = go.Scatter(x=bank_names_list,    
                                 y=total_payback_keren_shava_per_bank,         
                                 mode='lines+markers',    
                                 name=f'Payback in NIS - {risk_level} - Keren-Shava Method'  # Ensure unique trace names
                                )
             traces_payback.append(trace)
-            
             trace = go.Scatter(x=bank_names_list,    
                                 y=total_payback_rate_shpizer_per_bank,         
                                 mode='lines+markers',    
                                 name=f'Payback Rate - {risk_level}- Shpizer Method'  # Ensure unique trace names
-                               ) 
-
+                               )
             traces_payback_rate.append(trace)
-
             trace = go.Scatter(x=bank_names_list,    
                                 y=total_payback_rate_keren_shava_per_bank,         
                                 mode='lines+markers',    
                                 name=f'Payback Rate - {risk_level} - Keren-Shava Method'  # Ensure unique trace names
                                )
             traces_payback_rate.append(trace)
-
-        layout_payback = go.Layout(
-           title="Shpizer/Keren-Shava Payback vs Bank",
-           xaxis_title="Bank",
-           yaxis_title="Payback Cash [NIS]",
-           hovermode='closest',
-           showlegend=True,  # Explicitly show the legend
-           legend=dict(
-           orientation='v',  # Vertical orientation
-           x=0,  # Position on the left
-           xanchor='left',  # Anchor to the left
-           y=1,  # Position at the top
-           yanchor='top'  # Anchor to the top
-           )
-        )
-        
-        layout_payback_rate = go.Layout(
-           title="Shpizer/Keren-Shava Payback Rate vs Bank",
-           xaxis_title="Bank",
-           yaxis_title="Payback Rate",
-           hovermode='closest',
-           showlegend=True,  # Explicitly show the legend
-           legend=dict(
-           orientation='v',  # Vertical orientation
-           x=0,  # Position on the left
-           xanchor='left',  # Anchor to the left
-           y=1,  # Position at the top
-           yanchor='top'  # Anchor to the top
-           )
-        )
-        
-        fig = make_subplots(rows=2, cols=1,
-                        subplot_titles=["Shpizer/Keren-Shava Payback Cash [NIS] vs Bank",
-                                        "Shpizer/Keren-Shava Payback Rate vs Bank"],
-                        horizontal_spacing=0.05,
-                        vertical_spacing=0.1,
-                        shared_xaxes="all")  # type: ignore
-        
-        for trace in traces_payback:
-            fig.add_trace(trace, row=1, col=1)
-
-        for trace in traces_payback_rate:
-            fig.add_trace(trace, row=2, col=1)
-
-        fig.update_xaxes(title_text="Bank", row=1, col=1)
-        fig.update_xaxes(title_text="Bank", row=2, col=1)
-        fig.update_yaxes(title_text="Payback [nis]", row=1, col=1)
-        fig.update_yaxes(title_text="Payback Rate", row=2, col=1)  
-
-        fig.show()
-        
-        fig = go.Figure(data=traces_payback, layout=layout_payback)
-        fig.show()
-        
-        fig = go.Figure(data=traces_payback_rate, layout=layout_payback_rate)
-        fig.show()
-        
-        loan_table, table_shpizer, table_keren_shava, figs = create_table_for_bank_and_risk(risk_level='Our_Mortgage', 
-                                                    bank_name = bank_name_for_plot, 
-                                                    mortgage_per_risk_per_bank = mortgage_per_risk_per_bank,
-                                                    mortgage_amount_nis = mortgage_amount_nis)
-        loan_table.show()
-        for fig in figs:
-            fig.show()
-            
-        table_shpizer.show()
-        table_keren_shava.show()
-     
+                
+            [loan_table, table_shpizer, table_keren_shava, figs] = plot_tables_and_figures(traces_payback, 
+                                                                                       traces_payback_rate, 
+                                                                                       extenal_plot, 
+                                                                                       bank_name_for_plot, 
+                                                                                       mortgage_per_risk_per_bank, 
+                                                                                       mortgage_amount_nis)
         return [loan_table, table_shpizer, table_keren_shava, figs]
 
     except KeyboardInterrupt:
@@ -400,6 +339,7 @@ if __name__ == '__main__':
                             mortgage_amount_nis = 1200000, 
                             years = 20,
                             loan_types_weights=loan_types_weights,
+                            extenal_plot = True,
                             num_years_per_loan_type = num_years_per_loan_type)
         
         # results = main_cli(
@@ -410,4 +350,6 @@ if __name__ == '__main__':
     # a=1
 
 
-# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]"
+# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15] -plot"
+# pyinstaller --onefile --name mortgage_analysis_cli --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\format_obj;format_obj" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\arg_parser.py;." main.py
+
