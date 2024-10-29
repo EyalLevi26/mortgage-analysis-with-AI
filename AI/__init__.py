@@ -5,10 +5,9 @@
 This package defines source code for AI
 """
 
-from . import (preprocessing_data)
+from . import (cpi_model)
 
-from .preprocessing_data import *
-
+from .cpi_model import *
 
 __all__ = []
-__all__.extend(preprocessing_data.__all__.copy())  # type: ignore
+__all__.extend(cpi_model.__all__.copy())  # type: ignore

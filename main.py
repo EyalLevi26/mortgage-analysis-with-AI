@@ -1,7 +1,7 @@
 __all__ = ['main_user', 'main_cli']
 
 from pathlib import Path
-from format_obj.classes_utills import DataLoader, SingleLoanType, Mortgage
+from mortgage_toolkit.mortgage_calculator import DataLoader, SingleLoanType, Mortgage
 import warnings
 import sys
 
@@ -11,7 +11,7 @@ from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
 from utills import create_table_for_bank_and_risk, import_package
 from typing import Union, Sequence, List, Optional
-from arg_parser import CLIArgumentParser
+from my_argparser import ArgumentParserCLI
 from plot_utils import plot_tables_and_figures
 import matplotlib.pyplot as plt
 
@@ -172,7 +172,7 @@ def main_cli(argv: Union[Sequence[str] , None] = None) -> Optional[List[Union[go
 
     """
     try:
-        args = CLIArgumentParser(argv)
+        args = ArgumentParserCLI(argv)
         traces_payback = []
         traces_payback_rate = []
         bank_info_instance = DataLoader(path=args.banks_info_path)
@@ -333,7 +333,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         path_file_banks_info = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx")
         warnings.simplefilter('always', RuntimeWarning)
-        loan_types_weights = [33, 0, 67, 0, 0] 
+        loan_types_weights = [0, 0, 0, 0, 100] 
         num_years_per_loan_type = [5, 15, 15, 5, 15]
         results = main_user(banks_info_path=path_file_banks_info, 
                             mortgage_amount_nis = 1200000, 
@@ -351,5 +351,5 @@ if __name__ == '__main__':
 
 
 # C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15] -plot"
-# pyinstaller --onefile --name mortgage_analysis_cli --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\format_obj;format_obj" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\arg_parser.py;." main.py
+# pyinstaller --onefile --name mortgage_analysis_cli --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_toolkit;mortgage_toolkit" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\my_argparser.py;." main.py
 
