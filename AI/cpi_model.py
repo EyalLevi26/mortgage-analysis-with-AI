@@ -555,7 +555,7 @@ class MySARIMAX:
           if years == None:
               years = 30
           mounths = years * 12
-          start_index = len(self.cpi_values) - mounths - 1
+          start_index = int(len(self.cpi_values) - mounths - 1)
           cpi_growth_percentage = 100 * (self.cpi_values[start_index + 1: ] / self.cpi_values[start_index: -1]) - 100
           
           pred_mean, dates = self.predict(start=start_index, end=len(self.cpi_values)-1, return_conf_int=False, plot_results = False, manual_predict = True)
