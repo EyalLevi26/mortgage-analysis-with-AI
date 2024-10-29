@@ -294,7 +294,7 @@ class MySARIMAX:
         if self.data_train_vX is not None:
             self.data_train_vX = np.exp(self.data_train_vX)  # Inverse log transformation
                   
-      def predict(self, start=None, steps_ahead=None, return_conf_int=True, plot_results = True):
+      def predict(self, start=None, end=None, steps_ahead=None, return_conf_int=True, plot_results = True, manual_predict = False):
         """
         Generates predictions from the trained SARIMAX model.
 
@@ -312,29 +312,68 @@ class MySARIMAX:
         oTestModel = sarimax.SARIMAX(np.log(self.cpi_values), order=(p, d, q), seasonal_order=(P,D,Q,S), trend='c')
         oTestModel = oTestModel.filter(self.oTrainModel.params)
         self.oTestModel = oTestModel
-        # Default the start index to the beginning of the test data
-        if start is None:
-            start = int(len(self.data_train_vX)/20)
-
-        # Default steps_ahead to cover the entire test set if not specified
-        if steps_ahead is None:
-
-            steps_ahead = int(len(self.data_test_vX) / 20)
 
         # Get predictions from the trained SARIMAX model
-        prediction = oTestModel.get_prediction(start, self.n_cpi_values - 1 + steps_ahead, len(self.data_train_vX) + start)
-        pred_mean  = prediction.predicted_mean
-        pred_mean  = np.exp(pred_mean)
-        vPredIdx   = np.arange(start, self.n_cpi_values + steps_ahead) 
+        if not manual_predict:
+            # Default the start index to the beginning of the test data
+            if start is None or isinstance(start, str):
+                start = 0 # int(len(self.data_train_vX)/20)
+
+            # Default steps_ahead to cover the entire test set if not specified
+            if steps_ahead is None or isinstance(steps_ahead, str):
+                steps_ahead = 0 # int(len(self.data_test_vX) / 20)
+                
+            prediction = oTestModel.get_prediction(start, self.n_cpi_values - 1 + steps_ahead, len(self.data_train_vX) - start)
+            
+            pred_mean  = prediction.predicted_mean
+            pred_mean  = np.exp(pred_mean)
+            vPredIdx   = np.arange(start, self.n_cpi_values + steps_ahead) 
+
+            dates = self.dates_cpi_values[np.arange(0, self.n_cpi_values)]
+
+            dates_datetime = pd.to_datetime(dates, format='%Y-%m')
+            additional_dates = [dates_datetime[-1] + pd.DateOffset(months=i) for i in range(1, steps_ahead + 1)]
+            if additional_dates:
+                all_dates = np.concatenate([dates_datetime, additional_dates])
+            else:
+                all_dates = dates_datetime
+
+            all_dates = pd.to_datetime(all_dates)
+            all_dates_pred = all_dates.strftime('%Y-%m').values
         
-        dates = self.dates_cpi_values[np.arange(0, self.n_cpi_values)]
-
-        dates_datetime = pd.to_datetime(dates, format='%Y-%m')
-        additional_dates = [dates_datetime[-1] + pd.DateOffset(months=i) for i in range(1, steps_ahead + 1)]
-        all_dates = np.concatenate([dates_datetime, additional_dates])
-        all_dates = pd.to_datetime(all_dates)
-        all_dates_pred = all_dates.strftime('%Y-%m').values
-
+        else:
+            if isinstance(start, (int, float)) and start < len(self.dates_cpi_values) - 1:
+                start = self.dates_cpi_values[start]
+                
+            index_start = np.where(self.dates_cpi_values == start)[0][0]
+            
+            if end is None:
+                index_end = index_start + 1
+            elif isinstance(end, (int, float)) and end < len(self.dates_cpi_values):
+                end = self.dates_cpi_values[end]
+                                
+            index_end = np.where(self.dates_cpi_values == end)[0][0]
+                
+            prediction = oTestModel.get_prediction(index_start, index_end, len(self.data_train_vX) - index_start)
+            
+            pred_mean  = prediction.predicted_mean
+            pred_mean  = np.exp(pred_mean)
+            vPredIdx   = np.arange(index_start, index_end+1) - index_start
+            if index_end < len(self.dates_cpi_values):
+                dates      = self.dates_cpi_values[np.arange(index_start, index_end+1)]
+            else:
+                dates      = self.dates_cpi_values[np.arange(index_start, len(self.dates_cpi_values))]
+            
+            dates_datetime = pd.to_datetime(dates, format='%Y-%m')
+            additional_dates = [dates_datetime[-1] + pd.DateOffset(months=i) for i in range(1, index_end - len(self.dates_cpi_values) + 1)]
+            if additional_dates:
+                all_dates = np.concatenate([dates_datetime, additional_dates])
+            else:
+                all_dates = dates_datetime
+                
+            all_dates = pd.to_datetime(all_dates)
+            all_dates_pred = all_dates.strftime('%Y-%m').values    
+                
         if return_conf_int:
             pred_conf_int = prediction.conf_int(alpha=0.05)
             
@@ -349,7 +388,7 @@ class MySARIMAX:
                             }
                self.visualize_results(plot_data)  
 
-            return pred_mean, pred_conf_int
+            return pred_mean, all_dates_pred, pred_conf_int
         else:
             if plot_results:  
                plot_data = {
@@ -359,7 +398,7 @@ class MySARIMAX:
                             'pred_conf_int': None
                             }
                self.visualize_results(plot_data)  
-            return pred_mean
+            return pred_mean, all_dates_pred
       
       def visualize_results(self, plot_data):
            pred_mean      = plot_data['pred_mean']
@@ -470,8 +509,87 @@ class MySARIMAX:
               vEn    = np.log(self.cpi_values[start:]) - pred_mean_train_test             
               fig = PlotResidual(vEn)
               fig.show    (block=True)
+              
+      def calc_cpi_growth_in_percentage(self, years = 30, plot_results = False):
+          """
+            Calculate the CPI growth percentage over a specified period and optionally plot the results.
 
+            This method calculates the percentage growth in the Consumer Price Index (CPI) values over a given number of years,
+            using a rolling monthly approach. Additionally, it generates predictions over the same time period and calculates 
+            the predicted growth percentage. If `plot_results` is set to True, it displays a line plot comparing actual growth
+            percentages with predicted values.
 
+            Parameters
+            ----------
+            years : int, optional
+                The number of years to consider for calculating CPI growth percentage. Defaults to 30 if not provided.
+            plot_results : bool, optional
+                If True, generates a Plotly figure with actual and predicted CPI growth percentages over time. Default is False.
+
+            Returns
+            -------
+            cpi_growth_percentage : numpy.ndarray
+                The actual CPI growth percentages calculated over the specified period.
+            dates : numpy.ndarray
+                The corresponding dates for each calculated growth percentage.
+            cpi_pred_growth_percentage : numpy.ndarray
+                The predicted CPI growth percentages over the same period.
+
+            Plot
+            ----
+            If `plot_results` is True, displays a Plotly figure with:
+                - Actual CPI growth percentage (labeled "Ground Truth")
+                - Predicted CPI growth percentage (labeled "Prediction")
+
+            Example
+            -------
+            cpi_growth, dates, pred_growth = obj.calc_cpi_growth_in_percentage(years=10, plot_results=True)
+        """
+
+          if years == None:
+              years = 30
+          mounths = years * 12
+          start_index = len(self.cpi_values) - mounths
+          cpi_growth_percentage = 100 * (self.cpi_values[start_index + 1: ] / self.cpi_values[start_index: -1]) - 100
+          
+          pred_mean, dates = self.predict(start=start_index, end=len(self.cpi_values)-1, return_conf_int=False, plot_results = False, manual_predict = True)
+          cpi_pred_growth_percentage = 100 * (pred_mean[1: ] / pred_mean[:-1]) - 100
+          
+          if plot_results:
+             # Create the figure
+             fig = go.Figure()
+             
+             fig.add_trace(go.Scatter(
+                 x=dates,
+                 y=cpi_growth_percentage,
+                 mode='lines+markers',
+                 name='Ground Truth'
+             ))
+             
+             fig.add_trace(go.Scatter(
+                 x=dates,
+                 y=cpi_pred_growth_percentage,
+                 mode='lines+markers',
+                 name='Prediction'
+             ))
+             
+             fig.update_layout(
+                               title="Growth Percentage and Prediction over Time",
+                               xaxis_title="Dates",
+                               yaxis_title="Monthly Growth Change (%)",
+                               legend=dict(
+                               title="Legend",
+                               orientation="h",
+                               yanchor="bottom",
+                               y=1.02,
+                               xanchor="center",
+                               x=0.5)
+                              )
+             
+             fig.show()
+          
+          return cpi_growth_percentage, dates, cpi_pred_growth_percentage
+      
 def PlotResidual(vEn):
     std     = np.std(vEn)
     oKde    = gaussian_kde(vEn)
@@ -577,10 +695,10 @@ if __name__ == '__main__':
    file_path = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\data_cpi.xlsx")   
    cpi_data_obj = LoadTable4CPI(file_path=file_path)
    
-   MyModel =  MySARIMAX(cpi_data_obj=cpi_data_obj, partial_train_percentage=85, apply_model_fitting=False, use_plotly=True)
+   MyModel =  MySARIMAX(cpi_data_obj=cpi_data_obj, partial_train_percentage=98, apply_model_fitting=False, use_plotly=True)
    MyModel.train()
-   MyModel.predict()
-
+   MyModel.predict(manual_predict = True, start='2004-08', end='2024-08')
+   MyModel.calc_cpi_growth_in_percentage(years = 1)
    a=1
 
 
