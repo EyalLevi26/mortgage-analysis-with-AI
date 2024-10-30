@@ -1,6 +1,42 @@
 # **Mortgage Analysis with AI**
 AI-powered mortgage data analysis using time series forecasting (ARIMA/SARIMAX), stationarity tests, and model optimization. Includes data preprocessing and visualization for predictive insights.
 
+## **Quick Start Guide**
+
+To set up the project and install necessary dependencies, follow these steps:
+
+1. **Navigate to your desired directory:**
+   ```bash
+   cd path/to/clone/project
+   ```
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/EyalLevi26/mortgage-analysis-with-AI.git
+   ```
+
+3. **Enter the project directory:**
+   ```bash
+   cd mortgage-analysis-with-AI
+   ```
+
+4. **Create a virtual environment with Python 3.8.10:**
+   ```bash
+   C:\Users\DELL\AppData\Local\Programs\Python\Python38\python.exe -m venv myenv
+   ```
+
+5. **Activate the virtual environment:**
+   ```bash
+   myenv\Scripts\activate.bat
+   ```
+
+6. **Install dependencies from `requirements.txt`:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+This will prepare the project for execution and install all required packages in a virtual environment.
+
 ## **Running the Mortgage Analysis**
 You have three options to run the code and simulate the mortgage:
 
