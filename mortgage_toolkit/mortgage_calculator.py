@@ -8,7 +8,7 @@ from typing import (List, Union, Dict)
 import math
 from utills import cpi_growth
 import pickle
-from AI.cpi_model import LoadTable4CPI, ProgressCallback, MySARIMAX
+from AI.cpi_model import  MySARIMAX
 import os
 
 # my_sarimax_model = MySARIMAX()

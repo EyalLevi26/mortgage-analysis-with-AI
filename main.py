@@ -350,6 +350,5 @@ if __name__ == '__main__':
     # a=1
 
 
-# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15] -plot"
-# pyinstaller --onefile --name mortgage_analysis_cli --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_toolkit;mortgage_toolkit" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI;AI" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\my_argparser.py;." main.py
-
+# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]" -plot
+# pyinstaller --onefile --name mortgage_analysis_cli --hidden-import=pmdarima --hidden-import=tqdm --hidden-import=pickle --hidden-import=typing --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_toolkit;mortgage_toolkit" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI;AI" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\plot_utils.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\my_argparser.py;." main.py
