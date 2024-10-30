@@ -109,7 +109,8 @@ class ProgressCallback:
 class MySARIMAX:
       def __init__(self, cpi_data_obj: Union[LoadTable4CPI , None] = None, partial_train_percentage: float = 85, apply_model_fitting: bool =False,  use_plotly: bool=True):
          if cpi_data_obj is None:
-            file_path    = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\data_cpi.xlsx")   
+            # file_path    = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\data_cpi.xlsx") 
+            file_path    = Path(r"data_cpi.xlsx")   
             cpi_data_obj = LoadTable4CPI(file_path=file_path)
         
          self.cpi_values                         = cpi_data_obj.cpi_values_df[cpi_data_obj.cpi_values_df.columns[1]].values
@@ -598,7 +599,8 @@ class MySARIMAX:
       
       @classmethod
       def load_model(self):
-          model_directory = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI\models")
+        #   model_directory = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI\models")
+          model_directory = Path(r"AI\models")
           try:
               model_file_path = model_directory / 'mysarimax_instance.pkl'
               with open(model_file_path, 'rb') as f:
@@ -722,14 +724,15 @@ def PlotResidual(vEn):
 
  
 if __name__ == '__main__':
-    save_model = True
-    load_model = False
+    save_model = False
+    load_model = True
     
     if save_model: load_model = False     
     if load_model: save_model = False
         
     if not load_model:
-       file_path = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\data_cpi.xlsx")   
+    #    file_path = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\data_cpi.xlsx")   
+       file_path = Path(r"data_cpi.xlsx") 
        cpi_data_obj = LoadTable4CPI(file_path=file_path)
        
        MySarimaxModel =  MySARIMAX(cpi_data_obj=cpi_data_obj, partial_train_percentage=98, apply_model_fitting=False, use_plotly=True)
@@ -737,7 +740,8 @@ if __name__ == '__main__':
        MySarimaxModel.predict(manual_predict = True, start='2004-08', end='2024-08', plot_results=False)
        MySarimaxModel.calc_cpi_growth_in_percentage(years = 20, plot_results=False)
     
-    model_directory = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI\models")
+    # model_directory = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI\models")
+    model_directory = Path(r"AI\models")
     model_directory.mkdir(exist_ok=True)
     
     if save_model:

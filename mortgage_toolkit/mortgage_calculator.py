@@ -13,7 +13,7 @@ import os
 
 # my_sarimax_model = MySARIMAX()
 # my_sarimax_model.train()
-# model_directory = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI\models")
+# model_directory = Path(r"AI\models")
 # model_directory.mkdir(exist_ok=True)    
 # try:
     # model_file_path = model_directory / 'mysarimax_instance.pkl'

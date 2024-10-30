@@ -31,7 +31,7 @@ To use the Mortgage Analysis CLI, you’ll need to create an executable file fro
 Run the following **PyInstaller** command to package `main.py` as an executable:
 
 ```bash
-pyinstaller --onefile --name mortgage_analysis_cli --hidden-import=pmdarima --hidden-import=tqdm --hidden-import=pickle --hidden-import=typing --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_toolkit;mortgage_toolkit" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI;AI" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\plot_utils.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\my_argparser.py;." main.py
+pyinstaller --onefile --name mortgage_analysis_cli --hidden-import=pmdarima --hidden-import=tqdm --hidden-import=pickle --hidden-import=typing --add-data "mortgage_toolkit;mortgage_toolkit" --add-data "AI;AI" --add-data "payback_methods;payback_methods" --add-data "plot_utils.py;." --add-data "utills.py;." --add-data "my_argparser.py;." main.py
 ```
 
 **Explanation of flags used:**
@@ -47,12 +47,12 @@ This command will generate `mortgage_analysis_cli.exe` in the `dist` folder with
 Once the executable is created, you can run it using the following command:
 
 ```bash
-C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]" -plot
+dist\mortgage_analysis_cli.exe mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]" -plot
 ```
 
 **Explanation of arguments:**
 
-- **`C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx`**: Path to the Excel file containing mortgage bank information.
+- **`mortgage_israel_bank_info.xlsx`**: Path to the Excel file containing mortgage bank information.
 - **`-m`**: Specifies the mortgage amount in NIS.
 - **`-y`**: Defines the number of years for the mortgage.
 - **`-b`**: Bank name (e.g., **Benleomi**).

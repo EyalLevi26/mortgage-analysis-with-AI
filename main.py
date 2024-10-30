@@ -331,24 +331,24 @@ def main_cli(argv: Union[Sequence[str] , None] = None) -> Optional[List[Union[go
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        # path_file_banks_info = Path(r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx")
-        # warnings.simplefilter('always', RuntimeWarning)
-        # loan_types_weights = [0, 0, 0, 0, 100] 
-        # num_years_per_loan_type = [5, 15, 15, 5, 15]
-        # results = main_user(banks_info_path=path_file_banks_info, 
-                            # mortgage_amount_nis = 1200000, 
-                            # years = 20,
-                            # loan_types_weights=loan_types_weights,
-                            # extenal_plot = True,
-                            # num_years_per_loan_type = num_years_per_loan_type)
-        
-        results = main_cli(
-                [r"C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx"] +
-                "-m 1200000 -y 15 -b Benleomi -w [0,0,0,0,100] -yl [10,10,10,10,15] -plot".split())
+        path_file_banks_info = Path(r"mortgage_israel_bank_info.xlsx")
+        warnings.simplefilter('always', RuntimeWarning)
+        loan_types_weights = [0, 0, 0, 0, 100] 
+        num_years_per_loan_type = [5, 15, 15, 5, 15]
+        results = main_user(banks_info_path=path_file_banks_info, 
+                            mortgage_amount_nis = 1200000, 
+                            years = 20,
+                            loan_types_weights=loan_types_weights,
+                            extenal_plot = True,
+                            num_years_per_loan_type = num_years_per_loan_type)
+                
+        # results = main_cli(
+        #         [r"mortgage_israel_bank_info.xlsx"] +
+        #         "-m 1200000 -y 15 -b Benleomi -w [0,0,0,0,100] -yl [10,10,10,10,15] -plot".split())
     else:
         main_cli()
-    # a=1
+    
 
 
-# C:\Users\DELL\Documents\mortgage\MortgageAnalysis\dist\mortgage_analysis_cli.exe C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]" -plot
-# pyinstaller --onefile --name mortgage_analysis_cli --hidden-import=pmdarima --hidden-import=tqdm --hidden-import=pickle --hidden-import=typing --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\mortgage_toolkit;mortgage_toolkit" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\AI;AI" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\payback_methods;payback_methods" --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\plot_utils.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\utills.py;." --add-data "C:\Users\DELL\Documents\mortgage\MortgageAnalysis\my_argparser.py;." main.py
+# dist\mortgage_analysis_cli.exe mortgage_israel_bank_info.xlsx -m 1200000 -y 15 -b Benleomi -w "[0,0,0,0,100]" -yl "[10,10,10,10,15]" -plot
+# pyinstaller --onefile --name mortgage_analysis_cli --hidden-import=pmdarima --hidden-import=tqdm --hidden-import=pickle --hidden-import=typing --add-data "mortgage_toolkit;mortgage_toolkit" --add-data "AI;AI" --add-data "payback_methods;payback_methods" --add-data "plot_utils.py;." --add-data "utills.py;." --add-data "my_argparser.py;." main.py

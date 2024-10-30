@@ -19,7 +19,7 @@ class MortgageAnalysisTool:
         self.total_mortgage_amount_nis = tk.StringVar(root)
         self.loan_types: List[Tuple[str, int, float]] = []
 
-        self.default_path = "C:\\Users\\DELL\\Documents\\mortgage\\MortgageAnalysis\\mortgage_israel_bank_info.xlsx"
+        self.default_path = "mortgage_israel_bank_info.xlsx"
 
         # Create UI
         self.create_widgets()
