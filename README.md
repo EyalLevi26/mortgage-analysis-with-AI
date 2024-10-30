@@ -1,6 +1,29 @@
 # **Mortgage Analysis with AI**
 AI-powered mortgage data analysis using time series forecasting (ARIMA/SARIMAX), stationarity tests, and model optimization. Includes data preprocessing and visualization for predictive insights.
 
+## **Running the Mortgage Analysis**
+You have three options to run the code and simulate the mortgage:
+
+### **Option 1**: Run `main_user` in `main.py` using Python
+You can directly execute the `main_user` function in `main.py` by running:
+
+```bash
+python main.py
+```
+
+This option allows you to run the code directly through Python, which can be useful for debugging or customizing the mortgage analysis in code.
+
+### **Option 2**: Run the GUI with `MortgageAnalyzerApp.py`
+To interact with a graphical interface, you can run the `MortgageAnalyzerApp.py` file:
+
+```bash
+python MortgageAnalyzerApp.py
+```
+
+This will open a user-friendly GUI, where you can input mortgage details, choose options, and visualize results without needing to use the command line.
+
+### **Option 3**: Run with the CLI
+
 ## **Running the Mortgage Analysis CLI**
 To use the Mortgage Analysis CLI, you’ll need to create an executable file from the `main.py` script using **PyInstaller**. This ensures that all dependencies and required files are included in the executable. Follow these steps:
 
